@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Telemetry Data</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.1.2/socket.io.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+    <style>
+        #acceleration-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 300px;
+        }
+        .axis-mark {
+            fill: none;
+            stroke: lightgray;
+            stroke-width: 1;
+        }
+        .axis-label {
+            font-size: 10px;
+            fill: lightgray;
+        }
+    </style>
+</head>
+<body>
+    <h1>Telemetry Data</h1>
+    <style type="text/css">
+        .tg  {border-collapse:collapse;border-spacing:0;width: 100%;}
+        .tg td{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+          overflow:hidden;padding:10px 5px;word-break:normal;width: 25%; height: auto;}
+        .tg th{border-color:black;border-style:solid;border-width:1px;font-family:Arial, sans-serif;font-size:14px;
+          font-weight:normal;overflow:hidden;padding:10px 5px;word-break:normal;width: 25%;}
+        .tg .tg-cly1{text-align:center;vertical-align:middle}
+        .tg .tg-0lax{text-align:left;vertical-align:middle}
+    </style>
+    <table class="tg">
+        <thead>
+            <tr>
+                <th class="tg-cly1">Basic Data</th>
+                <th class="tg-cly1">RPM</th>
+                <th class="tg-cly1">Speed</th>
+                <th class="tg-cly1">G-Force</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="tg-0lax">
+                    <p id="IsRaceOn">Race Status: Loading...</p>
+                    <p id="CurrentEngineRpm">Current Engine RPM: Loading...</p>
+                    <p id="Speed">Speed: Loading...</p>
+                    <p id="Gear">Gear: Loading...</p>
+                    <p id="AccelerationX">AccelerationX: Loading...</p>
+                    <p id="AccelerationY">AccelerationY: Loading...</p>
+                    <p id="AccelerationZ">AccelerationZ: Loading...</p>
+                </td>
+                <td class="tg-cly1">
+                    <svg id="gauge-rpm" width="300" height="300"></svg>
+                </td>
+                <td class="tg-cly1">
+                    <svg id="gauge-speed" width="300" height="300"></svg>
+                </td>
+                <td class="tg-cly1">
+                    <div id="acceleration-container">
+                        <svg id="acceleration-svg" width="300" height="300">
+                            <!-- Circle for maximum value range -->
+                            <circle cx="150" cy="150" r="100" fill="none" stroke="lightgray" stroke-width="2" />
+                            <circle id="dot" cx="150" cy="150" r="5" fill="blue" />
+                            <!-- Mark values along the X and Y axes -->
+                            <line x1="150" y1="50" x2="150" y2="250" class="axis-mark" />
+                            <line x1="50" y1="150" x2="250" y2="150" class="axis-mark" />
+                            <!-- 0 -->
+                            <text x="150" y="150" text-anchor="middle" class="axis-label">0</text>
+                            <!-- Y Axis Positives (up) -->
+                            <text x="150" y="117" text-anchor="middle" class="axis-label">-5</text>
+                            <text x="150" y="84" text-anchor="middle" class="axis-label">-10</text>
+                            <text x="150" y="51" text-anchor="middle" class="axis-label">-15</text>
+                            <!-- Y Axis Negatives (down) -->
+                            <text x="150" y="183" text-anchor="middle" class="axis-label">5</text>
+                            <text x="150" y="216" text-anchor="middle" class="axis-label">10</text>
+                            <text x="150" y="249" text-anchor="middle" class="axis-label">15</text>
+                            <!-- X Axis Negatives (left) -->
+                            <text x="117" y="150" text-anchor="middle" class="axis-label">5</text>
+                            <text x="84" y="150" text-anchor="middle" class="axis-label">10</text>
+                            <text x="51" y="150" text-anchor="middle" class="axis-label">15</text>
+                            <!-- X Axis Positives (right) -->
+                            <text x="183" y="150" text-anchor="middle" class="axis-label">-5</text>
+                            <text x="216" y="150" text-anchor="middle" class="axis-label">-10</text>
+                            <text x="249" y="150" text-anchor="middle" class="axis-label">-15</text>
+                        </svg>
+                        <svg id="arrow-svg" width="75" height="75">
+                            <path id="arrow" d="M20,30 L15,40 L25,40 Z" fill="blue" />
+                        </svg>
+                    </div>
+                </td>
+            </tr>
+        </tbody>
+        <thead>
+            <tr>
+                <th class="tg-cly1">
+                    Car Stats
+                </th>
+                <th class="tg-cly1">
+                    Map Position 
+                </th>
+                <th class="tg-cly1">
+                     Wheels and Tyres
+                </th>
+                <th class="tg-cly1">
+                     Brakes and Suspension
+                </th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td class="tg-0lax">
+                    <p id="CarOrdinal">CarOrdinal: Loading...</p>
+                    <p id="CarPerformanceIndex">CarPerformanceIndex: Loading...</p>
+                    <p id="DrivetrainType">DrivetrainType: Loading...</p>
+                    <p id="NumCylinders">NumCylinders: Loading...</p>
+                    <p id="Power"></p>
+                    <p id="Torque"></p>
+                </td>
+                <td class="tg-0lax">
+                    <p id="PositionX">PositionX: Loading...</p>
+                    <p id="PositionY">PositionY: Loading...</p>
+                    <p id="PositionZ">PositionZ: Loading...</p>
+                </td>
+                <td class="tg-cly1">
+                    <table>
+                        <tr>
+                            <td class="tg-cly1">
+                                <p id="WheelRotationSpeedFrontLeft"></p>
+                                <p id="TireTempFrontLeft"></p>
+                                <br />
+                                <svg id="svg-tire-front-left" width="100" height="200">
+                                    <rect x="10" y="10" width="80" height="180" rx="15" ry="15" tireFill="#fff" stroke="#000" stroke-width="1" />
+                                </svg>
+                            </td>
+                            <td class="tg-cly1">
+                                <p id="WheelRotationSpeedFrontRight"></p>
+                                <p id="TireTempFrontRight"></p>
+                                <br />
+                                <svg id="svg-tire-front-right" width="100" height="200">
+                                    <rect x="10" y="10" width="80" height="180" rx="15" ry="15" tireFill="#fff" stroke="#000" stroke-width="1" />
+                                </svg>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td class="tg-cly1">
+                                <p id="WheelRotationSpeedRearLeft"></p>
+                                <p id="TireTempRearLeft"></p>
+                                <br />
+                                <svg id="svg-tire-rear-left" width="100" height="200">
+                                    <rect x="10" y="10" width="80" height="180" rx="15" ry="15" tireFill="#fff" stroke="#000" stroke-width="1" />
+                                </svg>
+                            </td>
+                            <td class="tg-cly1">
+                                <p id="WheelRotationSpeedRearRight"></p>
+                                <p id="TireTempRearRight"></p>
+                                <br />
+                                <svg id="svg-tire-rear-right" width="100" height="200">
+                                    <rect x="10" y="10" width="80" height="180" rx="15" ry="15" tireFill="#fff" stroke="#000" stroke-width="1" />
+                                </svg>
+                            </td>
+                        </tr>
+                    </table>
+                </td>
+                <td class="tg-cly1">
+                    COMING SOON
+                </td>
+            </tr>
+        </tbody>
+    </table>
+
+    <script type="text/javascript">
+        var socket = io.connect('http://' + document.domain + ':' + location.port);
+
+        socket.on('connect', function() {
+            console.log('Connected to the server.');
+        });
+
+        // Define the range for AccelerationX and AccelerationZ
+        var maxX = 25;
+        var minX = -25;
+        var maxZ = 25;
+        var minZ = -25;
+
+        var width = 300;
+        var height = 300;
+
+        // Calculate the position based on the values
+        var scaleX = d3.scaleLinear().domain([minX, maxX]).range([width, 0]);
+        var scaleY = d3.scaleLinear().domain([minZ, maxZ]).range([0, height]);
+
+        var svg = d3.select('#acceleration-svg');
+        var circle = svg.select('#dot');
+
+        // Function to update the dot's position based on AccelerationX and AccelerationZ
+        function updateDot(AccelerationX, AccelerationZ, AccelerationY) {
+            // Calculate the new position based on the values
+            var x = scaleX(AccelerationX);
+            var z = scaleY(AccelerationZ);
+
+            // Update the circle's position
+            circle.attr('cx', x)
+                .attr('cy', z);
+
+            // Update the arrow's position based on AccelerationY
+            var arrow = d3.select('#arrow');
+            if (AccelerationY < 0) {
+                // Positive AccelerationY points up
+                arrow.attr('d', 'M20,30 L15,40 L25,40 Z');
+            } else if (AccelerationY > 0) {
+                // Negative AccelerationY points down
+                arrow.attr('d', 'M20,40 L15,30 L25,30 Z');
+            } else {
+                // AccelerationY is 0, change the arrow to a dot
+                arrow.attr('d', 'M20,35 L17.5,37.5 L20,40 L22.5,37.5 Z');
+            }
+        }
+
+        socket.on('telemetry', function(data) {
+            // Update the telemetry data on the webpage
+            document.getElementById('IsRaceOn').textContent = 'Race Status: ' + data.IsRaceOn;
+            document.getElementById('CurrentEngineRpm').textContent = 'Current Engine RPM: ' + data.CurrentEngineRpm;
+            document.getElementById('AccelerationX').textContent = 'AccelerationX: ' + data.AccelerationX;
+            document.getElementById('AccelerationY').textContent = 'AccelerationY: ' + data.AccelerationY;
+            document.getElementById('AccelerationZ').textContent = 'AccelerationZ: ' + data.AccelerationZ;
+            document.getElementById('WheelRotationSpeedFrontLeft').textContent = 'Front Left Wheel: ' + data.WheelRotationSpeedFrontLeft + ' rad/s';
+            document.getElementById('WheelRotationSpeedFrontRight').textContent = 'Front Right Wheel: ' + data.WheelRotationSpeedFrontRight + ' rad/s';
+            document.getElementById('WheelRotationSpeedRearLeft').textContent = 'Rear Left Wheel: ' + data.WheelRotationSpeedRearLeft + ' rad/s';
+            document.getElementById('WheelRotationSpeedRearRight').textContent = 'Rear Right Wheel: ' + data.WheelRotationSpeedRearRight + ' rad/s';
+            document.getElementById('CarOrdinal').textContent = 'CarOrdinal: ' + data.CarOrdinal;
+            document.getElementById('CarPerformanceIndex').textContent = 'CarPerformanceIndex: ' + data.CarPerformanceIndex;
+            // Check the value of IsRaceOn
+            var DrivetrainTypeElement = document.getElementById('DrivetrainType');
+            if (data.IsRaceOn === 0) {
+                DrivetrainTypeElement.textContent = 'DrivetrainType: 0';
+            } else if (data.IsRaceOn === 1) {
+                // Add a conditional statement for DrivetrainType
+                switch (data.DrivetrainType) {
+                    case 0:
+                        DrivetrainTypeElement.textContent = 'DrivetrainType: FWD';
+                        break;
+                    case 1:
+                        DrivetrainTypeElement.textContent = 'DrivetrainType: RWD';
+                        break;
+                    case 2:
+                        DrivetrainTypeElement.textContent = 'DrivetrainType: AWD';
+                        break;
+                    default:
+                        DrivetrainTypeElement.textContent = 'DrivetrainType: Unknown';
+                        break;
+                }
+            } else {
+                DrivetrainTypeElement.textContent = 'DrivetrainType: Unknown';
+            }
+            document.getElementById('NumCylinders').textContent = 'NumCylinders: ' + data.NumCylinders;
+            document.getElementById('PositionX').textContent = 'PositionX: ' + data.PositionX;
+            document.getElementById('PositionY').textContent = 'PositionY: ' + data.PositionY;
+            document.getElementById('PositionZ').textContent = 'PositionZ: ' + data.PositionZ;
+            document.getElementById('Speed').textContent = 'Speed: ' + (data.Speed * 3.6).toFixed(0) + ' km/h (' + (data.Speed * 2.23694).toFixed(0) + ' mp/h)';
+            document.getElementById('Gear').textContent = 'Gear: ' + data.Gear;
+            document.getElementById('Power').textContent = 'Power: ' + data.Power;
+            document.getElementById('Torque').textContent = 'Torque: ' + data.Torque;
+            // Check the value of IsRaceOn
+            var TireTempFrontLeftElement = document.getElementById('TireTempFrontLeft');
+            if (data.IsRaceOn === 0) {
+                TireTempFrontLeftElement.textContent = 'TireTempFrontLeft: 0 C (0 F)';
+            } else if (data.IsRaceOn === 1) {
+                var tempCelsius = ((data.TireTempFrontLeft - 32) * (5/9)).toFixed(0);
+                TireTempFrontLeftElement.textContent = 'TireTempFrontLeft: ' + tempCelsius + ' C (' + data.TireTempFrontLeft + ' F)';
+                // Update the tire temperature SVG
+                updateTireTemperatureSVG('svg-tire-front-left', tempCelsius);
+            }
+
+            var TireTempFrontRightElement = document.getElementById('TireTempFrontRight');
+            if (data.IsRaceOn === 0) {
+                TireTempFrontRightElement.textContent = 'TireTempFrontRight: 0 C (0 F)';
+            } else if (data.IsRaceOn === 1) {
+                var tempCelsius = ((data.TireTempFrontRight - 32) * (5/9)).toFixed(0);
+                TireTempFrontRightElement.textContent = 'TireTempFrontRight: ' + tempCelsius + ' C (' + data.TireTempFrontRight + ' F)';
+                // Update the tire temperature SVG
+                updateTireTemperatureSVG('svg-tire-front-right', tempCelsius);
+            }
+
+            var TireTempRearLeftElement = document.getElementById('TireTempRearLeft');
+            if (data.IsRaceOn === 0) {
+                TireTempRearLeftElement.textContent = 'TireTempRearLeft: 0 C (0 F)';
+            } else if (data.IsRaceOn === 1) {
+                var tempCelsius = ((data.TireTempRearLeft - 32) * (5/9)).toFixed(0);
+                TireTempRearLeftElement.textContent = 'TireTempRearLeft: ' + tempCelsius + ' C (' + data.TireTempRearLeft + ' F)';
+                // Update the tire temperature SVG
+                updateTireTemperatureSVG('svg-tire-rear-left', tempCelsius);
+            }
+
+            var TireTempRearRightElement = document.getElementById('TireTempRearRight');
+            if (data.IsRaceOn === 0) {
+                TireTempRearRightElement.textContent = 'TireTempRearRight: 0 C (0 F)';
+            } else if (data.IsRaceOn === 1) {
+                var tempCelsius = ((data.TireTempRearRight - 32) * (5/9)).toFixed(0);
+                TireTempRearRightElement.textContent = 'TireTempRearRight: ' + tempCelsius + ' C (' + data.TireTempRearRight + ' F)';
+                // Update the tire temperature SVG
+                updateTireTemperatureSVG('svg-tire-rear-right', tempCelsius);
+            }
+
+            // Create or update the circular gauge for RPM
+            createCircularGauge('#gauge-rpm', data.CurrentEngineRpm, data.EngineMaxRpm);
+
+            // Create or update the circular gauge for Speed in km/h
+            createCircularGauge('#gauge-speed', data.Speed_KMH, 370); // Set the maximum speed as 370 km/h
+
+            // Update the dot and arrow position based on AccelerationX, AccelerationZ, and AccelerationY
+            updateDot(data.AccelerationX, data.AccelerationZ, data.AccelerationY);
+        });
+
+        // Function to create or update a circular gauge
+        function createCircularGauge(svgSelector, value, maxValue) {
+            var svg = d3.select(svgSelector);
+            var width = +svg.attr('width');
+            var height = +svg.attr('height');
+            var radius = Math.min(width, height) / 2;
+            var proportion = Math.min(value / maxValue, 1);
+
+            svg.selectAll('*').remove(); // Clear the previous content
+
+            var textColor = proportion > 0.87 ? 'red' : 'black';
+            var strokeColor = proportion > 0.87 ? 'red' : 'lightblue';
+
+            var arc = d3.arc()
+                .innerRadius(0.6 * radius)
+                .outerRadius(0.8 * radius)
+                .startAngle(-Math.PI / 2)
+                .endAngle(-Math.PI / 2 + proportion * Math.PI);
+
+            svg.append('g')
+                .attr('transform', 'translate(' + width / 2 + ',' + height / 2 + ')')
+                .append('path')
+                .style('fill', strokeColor)
+                .style('stroke', strokeColor)
+                .attr('d', arc);
+
+            svg.append('g')
+                .attr('transform', 'translate(' + width / 2 + ',' + height * 0.7 + ')')
+                .append('text')
+                .text(value)
+                .style('text-anchor', 'middle')
+                .style('font-size', '24px')
+                .style('fill', textColor);
+        }
+        
+        // Function to update the tire temperature SVG
+        function updateTireTemperatureSVG(containerId, temperature) {
+            var svg = d3.select('#' + containerId);
+
+            var tire = svg.select('rect');
+            var tireFill = 'white'; // Default fill color
+
+            // Adjust the fill color based on the tire temperature
+            if (temperature < 50) {
+                tireFill = 'white'; // Cold (blue)
+            } else if (temperature < 80) {
+                tireFill = 'green'; // Normal (green)
+            } else if (temperature < 100) {
+                tireFill = 'orange'; // Warm (orange)
+            } else {
+                tireFill = 'red'; // Hot (red)
+            }
+
+            tire.attr('fill', tireFill);
+        }
+    </script>
+</body>
+</html>
